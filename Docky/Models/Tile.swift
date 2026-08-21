@@ -28,6 +28,13 @@ enum TileContent: Equatable {
     case flexibleSpacer
     case divider
     case trash
+    case chromeProfile(ChromeProfileTile)
+}
+
+struct ChromeProfileTile: Equatable {
+    let profileDirectory: String
+    let profileName: String
+    let profileEmail: String?
 }
 
 struct AppTile: Equatable {

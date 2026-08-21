@@ -515,7 +515,7 @@ final class TileStore: ObservableObject {
             refreshPinnedTilesFromPreferences()
             rebuildTiles()
             return true
-        case .launchpad, .startMenu, .widget, .smartStack, .spacer, .flexibleSpacer, .divider:
+        case .launchpad, .startMenu, .widget, .smartStack, .spacer, .flexibleSpacer, .divider, .chromeProfile:
             return false
         }
     }
@@ -896,7 +896,7 @@ final class TileStore: ObservableObject {
     func insertPinnedItem(kind: PinnedTileItemKind, at destinationIndex: Int) {
         let item: PinnedTileItem
         switch kind {
-        case .app, .appFolder, .widget:
+        case .app, .appFolder, .widget, .chromeProfile:
             return
         case .launchpad:
             item = .launchpad()
@@ -1143,7 +1143,7 @@ final class TileStore: ObservableObject {
                     widgetSpan: nil,
                     hiddenWidgetOwnerBundleIdentifiers: []
                 )
-            case .app, .appFolder:
+            case .app, .appFolder, .chromeProfile:
                 return nil
             }
         case .none:
@@ -1979,7 +1979,7 @@ final class TileStore: ObservableObject {
                     return
                 }
                 count += 1
-            case .launchpad, .startMenu, .widget, .smartStack, .spacer, .flexibleSpacer, .divider:
+            case .launchpad, .startMenu, .widget, .smartStack, .spacer, .flexibleSpacer, .divider, .chromeProfile:
                 count += 1
             }
         }
@@ -2025,7 +2025,7 @@ final class TileStore: ObservableObject {
                         contentViewMode: item.folderContentViewMode ?? .grid
                     )
                 }
-            case .launchpad, .startMenu, .widget, .smartStack, .spacer, .flexibleSpacer, .divider:
+            case .launchpad, .startMenu, .widget, .smartStack, .spacer, .flexibleSpacer, .divider, .chromeProfile:
                 return item
             }
         }
@@ -2121,6 +2121,18 @@ final class TileStore: ObservableObject {
             return Tile(id: Self.pinnedTileID(for: item), content: .flexibleSpacer)
         case .divider:
             return Tile(id: Self.pinnedTileID(for: item), content: .divider)
+        case .chromeProfile:
+            guard let directory = item.chromeProfileDirectory,
+                  let name = item.chromeProfileName
+            else { return nil }
+            return Tile(
+                id: Self.pinnedTileID(for: item),
+                content: .chromeProfile(ChromeProfileTile(
+                    profileDirectory: directory,
+                    profileName: name,
+                    profileEmail: nil
+                ))
+            )
         }
     }
 
@@ -2646,6 +2658,11 @@ final class TileStore: ObservableObject {
                 widgetSpan: nil,
                 hiddenWidgetOwnerBundleIdentifiers: []
             )
+        case .chromeProfile(let profile):
+            return .chromeProfile(
+                directory: profile.profileDirectory,
+                name: profile.profileName
+            )
         case .folder, .trash, .minimizedWindow:
             return nil
         }
@@ -2673,7 +2690,7 @@ final class TileStore: ObservableObject {
             return existing.id == imported.id
         case .appFolder:
             return existing.id == imported.id
-        case .widget, .smartStack:
+        case .widget, .smartStack, .chromeProfile:
             return false
         }
     }
@@ -2694,7 +2711,7 @@ final class TileStore: ObservableObject {
             )
         case .trash:
             return .trash()
-        case .launchpad, .startMenu, .widget, .smartStack, .app, .appFolder, .spacer, .flexibleSpacer, .divider, .minimizedWindow:
+        case .launchpad, .startMenu, .widget, .smartStack, .app, .appFolder, .spacer, .flexibleSpacer, .divider, .minimizedWindow, .chromeProfile:
             return nil
         }
     }

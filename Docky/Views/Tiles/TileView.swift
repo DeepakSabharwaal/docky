@@ -101,7 +101,7 @@ struct TileView: View {
                     })
                 }
                 return actions
-            case .minimizedWindow, .appFolder, .widget, .smartStack, .spacer, .flexibleSpacer, .divider:
+            case .minimizedWindow, .appFolder, .widget, .smartStack, .spacer, .flexibleSpacer, .divider, .chromeProfile:
                 break
             }
         }
@@ -188,6 +188,8 @@ struct TileView: View {
                 }
             ]
         case .spacer, .flexibleSpacer, .divider:
+            return customDockyTileActions
+        case .chromeProfile:
             return customDockyTileActions
         }
     }
@@ -370,7 +372,7 @@ struct TileView: View {
     /// on"; widgets/spacers/dividers don't need the affordance.
     private var participatesInPressDarken: Bool {
         switch tile.content {
-        case .app, .appFolder, .folder, .trash:
+        case .app, .appFolder, .folder, .trash, .chromeProfile:
             return true
         case .minimizedWindow, .spacer, .flexibleSpacer, .divider, .launchpad, .startMenu, .widget, .smartStack:
             return false
@@ -437,7 +439,7 @@ struct TileView: View {
     /// widget reads as a misfire.
     private var supportsHoverBackground: Bool {
         switch tile.content {
-        case .app, .appFolder, .folder, .trash, .launchpad, .startMenu:
+        case .app, .appFolder, .folder, .trash, .launchpad, .startMenu, .chromeProfile:
             true
         case .widget, .smartStack, .divider, .spacer, .flexibleSpacer,
              .minimizedWindow:
@@ -484,7 +486,7 @@ struct TileView: View {
             return folder.apps.contains { app in
                 workspace.isFrontmost(bundleIdentifier: app.bundleIdentifier)
             }
-        case .folder, .launchpad, .startMenu, .widget, .smartStack, .spacer, .flexibleSpacer, .divider, .trash, .minimizedWindow:
+        case .folder, .launchpad, .startMenu, .widget, .smartStack, .spacer, .flexibleSpacer, .divider, .trash, .minimizedWindow, .chromeProfile:
             return false
         }
     }
@@ -511,7 +513,7 @@ struct TileView: View {
                 sum + (dockBadges.badge(forBundleIdentifier: app.bundleIdentifier).flatMap(Int.init) ?? 0)
             }
             return total > 0 ? String(total) : nil
-        case .folder, .launchpad, .startMenu, .widget, .smartStack, .spacer, .flexibleSpacer, .divider, .trash, .minimizedWindow:
+        case .folder, .launchpad, .startMenu, .widget, .smartStack, .spacer, .flexibleSpacer, .divider, .trash, .minimizedWindow, .chromeProfile:
             return nil
         }
     }
@@ -750,7 +752,7 @@ struct TileView: View {
             displayedContent
                 .padding(contentPaddingEdges, contentPadding)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-        case .app, .minimizedWindow, .spacer, .flexibleSpacer, .divider:
+        case .app, .minimizedWindow, .spacer, .flexibleSpacer, .divider, .chromeProfile:
             displayedContent
                 .background(appFolderDropTargetBackdrop)
                 .padding(contentPaddingEdges, contentPadding)
@@ -806,7 +808,7 @@ struct TileView: View {
             folder.apps.contains { app in
                 workspace.isRunning(bundleIdentifier: app.bundleIdentifier)
             }
-        case .launchpad, .startMenu, .widget, .smartStack, .folder, .spacer, .flexibleSpacer, .divider, .trash:
+        case .launchpad, .startMenu, .widget, .smartStack, .folder, .spacer, .flexibleSpacer, .divider, .trash, .chromeProfile:
             false
         }
     }
@@ -937,7 +939,7 @@ struct TileView: View {
             return tileChromeInset
         case .appFolder, .widget, .smartStack, .folder, .trash:
             return tileChromeInset
-        case .app, .launchpad, .startMenu, .minimizedWindow, .spacer, .flexibleSpacer, .divider:
+        case .app, .launchpad, .startMenu, .minimizedWindow, .spacer, .flexibleSpacer, .divider, .chromeProfile:
             return 0
         }
     }
@@ -1171,6 +1173,12 @@ struct TileView: View {
             DividerTileView(tileID: tile.id)
         case .trash:
             TrashTileView(isDropTarget: isTrashDropTarget)
+        case .chromeProfile(let profile):
+            ChromeProfileTileView(
+                tile: profile,
+                clipShape: preferences.effectiveTileClipShape,
+                transparencyCompensationInset: tileChromeInset
+            )
         }
     }
 
@@ -1196,6 +1204,8 @@ struct TileView: View {
             "Trash"
         case .spacer, .flexibleSpacer, .divider:
             nil
+        case .chromeProfile(let profile):
+            profile.profileName
         }
     }
 
@@ -1398,6 +1408,7 @@ struct TileView: View {
         case .spacer: return "spacer"
         case .flexibleSpacer: return "flexibleSpacer"
         case .divider: return "divider"
+        case .chromeProfile: return "chromeProfile"
         }
     }
 
@@ -1534,6 +1545,9 @@ struct TileView: View {
             }
         case .spacer, .flexibleSpacer, .divider:
             return
+        case .chromeProfile(let profile):
+            isTooltipPresented = false
+            ChromeProfileService.shared.launch(profileDirectory: profile.profileDirectory)
         }
     }
 

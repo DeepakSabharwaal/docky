@@ -110,7 +110,7 @@ final class PinnedDockSmartOrganizerService {
                         displayName: appDisplayName(for: bundleIdentifier)
                     ))
                 }
-            case .launchpad, .startMenu, .widget, .smartStack, .spacer, .flexibleSpacer, .divider:
+            case .launchpad, .startMenu, .widget, .smartStack, .spacer, .flexibleSpacer, .divider, .chromeProfile:
                 continue
             }
         }
@@ -449,7 +449,7 @@ final class PinnedDockSmartOrganizerService {
                     continue
                 }
                 result.append(item)
-            case .app, .appFolder, .launchpad, .startMenu, .widget, .smartStack:
+            case .app, .appFolder, .launchpad, .startMenu, .widget, .smartStack, .chromeProfile:
                 result.append(item)
             }
         }

@@ -23,6 +23,7 @@ enum PinnedTileItemKind: String, Codable, Equatable {
     case spacer
     case flexibleSpacer
     case divider
+    case chromeProfile
 }
 
 enum TrailingTileItemKind: String, Codable, Equatable {
@@ -49,6 +50,9 @@ struct PinnedTileItem: Codable, Equatable, Identifiable {
     let hiddenWidgetOwnerBundleIdentifiers: [String]
     /// Optional so pre-existing persisted items decode as nil (default behavior).
     var widgetSettings: WidgetSettings? = nil
+    /// Chrome profile fields — only set when kind == .chromeProfile.
+    var chromeProfileDirectory: String? = nil
+    var chromeProfileName: String? = nil
 
     nonisolated static func app(bundleIdentifier: String) -> Self {
         Self(
@@ -133,6 +137,24 @@ struct PinnedTileItem: Codable, Equatable, Identifiable {
             widgetOwnerBundleIdentifier: nil,
             widgetSpan: nil,
             hiddenWidgetOwnerBundleIdentifiers: []
+        )
+    }
+
+    nonisolated static func chromeProfile(directory: String, name: String) -> Self {
+        Self(
+            id: "chrome-profile:\(directory)",
+            kind: .chromeProfile,
+            bundleIdentifier: nil,
+            folderDisplayName: nil,
+            folderBundleIdentifiers: [],
+            appFolderDisplayMode: nil,
+            folderContentViewMode: nil,
+            widgetKind: nil,
+            widgetOwnerBundleIdentifier: nil,
+            widgetSpan: nil,
+            hiddenWidgetOwnerBundleIdentifiers: [],
+            chromeProfileDirectory: directory,
+            chromeProfileName: name
         )
     }
 

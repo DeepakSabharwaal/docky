@@ -955,7 +955,7 @@ struct TileContainerView: View {
                 return effectiveWidgetSpan(widget.span) == .one
             }
             return true
-        case .folder, .trash, .appFolder, .minimizedWindow, .launchpad, .startMenu, .spacer, .flexibleSpacer:
+        case .folder, .trash, .appFolder, .minimizedWindow, .launchpad, .startMenu, .spacer, .flexibleSpacer, .chromeProfile:
             return true
         case .widget(let widget):
             return effectiveWidgetSpan(widget.span) == .one
@@ -1189,7 +1189,7 @@ struct TileContainerView: View {
             return isPinnedReorderable(tileID: tile.id)
         case .widget, .smartStack:
             return isPinnedReorderable(tileID: tile.id) || isTrailingReorderable(tileID: tile.id)
-        case .launchpad, .startMenu, .spacer, .flexibleSpacer, .divider:
+        case .launchpad, .startMenu, .spacer, .flexibleSpacer, .divider, .chromeProfile:
             return editMode.isActive && (isPinnedReorderable(tileID: tile.id) || isTrailingReorderable(tileID: tile.id))
         case .folder, .trash:
             return editMode.isActive && isTrailingReorderable(tileID: tile.id)
@@ -1911,6 +1911,8 @@ struct TileContainerView: View {
             return "trash"
         case .minimizedWindow(let window):
             return "minimizedWindow(\(window.windowIdentifier))"
+        case .chromeProfile(let profile):
+            return "chromeProfile(\(profile.profileDirectory))"
         }
     }
 
@@ -1941,7 +1943,7 @@ struct TileContainerView: View {
                 guard folder.bundleIdentifiers.allSatisfy({ !selectedBundleIdentifierSet.contains($0) }) else {
                     continue
                 }
-            case .launchpad, .startMenu, .widget, .smartStack, .folder, .spacer, .flexibleSpacer, .divider, .trash:
+            case .launchpad, .startMenu, .widget, .smartStack, .folder, .spacer, .flexibleSpacer, .divider, .trash, .chromeProfile:
                 continue
             }
 

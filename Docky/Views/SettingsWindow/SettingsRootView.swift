@@ -27,6 +27,8 @@ private enum SettingsPane: String, CaseIterable, Identifiable {
     case windowManagement
     case actions
     case externalWidgets
+    case chromeProfiles
+    case appBrowser
     case behaviorLaunch
     case behaviorSystemDock
     case permissions
@@ -58,6 +60,8 @@ private enum SettingsPane: String, CaseIterable, Identifiable {
         case .windowManagement: "Window Management"
         case .actions: "Actions"
         case .externalWidgets: "Widget Store"
+        case .chromeProfiles: "Chrome Profiles"
+        case .appBrowser: "App Browser"
         case .behaviorLaunch: "Launch"
         case .behaviorSystemDock: "System Dock"
         case .permissions: "Permissions"
@@ -89,6 +93,8 @@ private enum SettingsPane: String, CaseIterable, Identifiable {
         case .windowManagement: "rectangle.on.rectangle"
         case .actions: "list.bullet.rectangle"
         case .externalWidgets: "bag"
+        case .chromeProfiles: "person.circle"
+        case .appBrowser: "square.grid.2x2"
         case .behaviorLaunch: "power"
         case .behaviorSystemDock: "dock.rectangle"
         case .permissions: "lock.shield"
@@ -120,6 +126,8 @@ private enum SettingsPane: String, CaseIterable, Identifiable {
         case .windowManagement: .blue
         case .actions: .red
         case .externalWidgets: .purple
+        case .chromeProfiles: .blue
+        case .appBrowser: .orange
         case .behaviorLaunch: .green
         case .behaviorSystemDock: .gray
         case .permissions: .red
@@ -162,7 +170,9 @@ private let settingsSections: [SettingsSection] = [
         .startMenu,
         .windowManagement,
         .actions,
-        .externalWidgets
+        .externalWidgets,
+        .chromeProfiles,
+        .appBrowser
     ]),
     SettingsSection(id: "system", title: "System", panes: [
         .behaviorLaunch,
@@ -384,6 +394,10 @@ private struct SettingsDetailView: View {
             ActionCatalogSettingsView()
         case .externalWidgets:
             WidgetsSettingsView()
+        case .chromeProfiles:
+            ChromeProfilesSettingsView()
+        case .appBrowser:
+            AppBrowserSettingsView()
         case .behaviorLaunch:
             BehaviorSettingsView(subsection: .launch)
         case .behaviorSystemDock:

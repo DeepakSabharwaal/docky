@@ -29,8 +29,14 @@ struct RunningApp: Hashable, Identifiable {
     let bundleURL: URL?
     let launchDate: Date?
     let isHidden: Bool
+    /// Display name — may differ from localizedName for Parall-launched instances
+    /// (e.g. "Claude Work" instead of "Claude").
+    let displayName: String
 
-    var id: String { bundleIdentifier }
+    /// Unique per running instance so multi-instance apps (e.g. two Chrome
+    /// profiles or two Parall instances of the same app) each get their own
+    /// tile instead of being merged into one.
+    var id: String { "\(bundleIdentifier):\(processIdentifier)" }
 }
 
 final class WorkspaceService: ObservableObject {
@@ -110,6 +116,17 @@ final class WorkspaceService: ObservableObject {
 
     func minimizedWindowPreview(for window: AppWindow) -> NSImage? {
         minimizedWindowPreviews[window.windowIdentifier]
+    }
+
+    /// Activate a specific process instance by PID. Falls back to bundle-ID
+    /// activation when the PID is no longer live.
+    func activateOrOpen(processIdentifier: pid_t, bundleIdentifier: String) {
+        if let app = NSRunningApplication(processIdentifier: processIdentifier) {
+            app.unhide()
+            app.activateTransferringFrontmost(options: [.activateAllWindows])
+        } else {
+            activateOrOpen(bundleIdentifier: bundleIdentifier)
+        }
     }
 
     func activateOrOpen(bundleIdentifier: String) {
@@ -590,22 +607,36 @@ final class WorkspaceService: ObservableObject {
         let regular = NSWorkspace.shared.runningApplications.filter {
             $0.activationPolicy == .regular && $0.bundleIdentifier != dockyBundleID
         }
-        var newMap: [String: RunningApp] = [:]
+        // Key by composite id (bundleID:pid) so multiple instances of the same
+        // app (e.g. two Parall-launched Claude windows) each get their own entry.
+        var newByID: [String: RunningApp] = [:]
+        // Secondary map keyed by bundle ID (first instance wins) — used by the
+        // isRunning/isHidden helpers that only care about presence, not count.
+        var newByBundleID: [String: RunningApp] = [:]
         for app in regular {
             guard let bundleID = app.bundleIdentifier else { continue }
-            newMap[bundleID] = RunningApp(
+            let pid = app.processIdentifier
+            let localized = app.localizedName ?? bundleID
+            let display = ParallAppResolver.shared.displayName(for: pid, fallback: localized)
+            let entry = RunningApp(
                 bundleIdentifier: bundleID,
-                localizedName: app.localizedName ?? bundleID,
-                processIdentifier: app.processIdentifier,
+                localizedName: localized,
+                processIdentifier: pid,
                 bundleURL: app.bundleURL,
                 launchDate: app.launchDate,
-                isHidden: app.isHidden
+                isHidden: app.isHidden,
+                displayName: display
             )
+            let compositeID = "\(bundleID):\(pid)"
+            newByID[compositeID] = entry
+            if newByBundleID[bundleID] == nil {
+                newByBundleID[bundleID] = entry
+            }
         }
 
-        let ordered = newMap.values.sorted(by: Self.byLaunchDate)
+        let ordered = newByID.values.sorted(by: Self.byLaunchDate)
 
-        runningByBundleID = newMap
+        runningByBundleID = newByBundleID
         if runningApps != ordered {
             runningApps = ordered
         }

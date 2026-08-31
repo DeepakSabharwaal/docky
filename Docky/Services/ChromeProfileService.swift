@@ -7,6 +7,7 @@
 //
 
 import AppKit
+import Combine
 import Foundation
 
 struct ChromeProfile: Identifiable, Equatable {
@@ -73,9 +74,17 @@ final class ChromeProfileService: ObservableObject {
         guard let chromeURL = NSWorkspace.shared
             .urlForApplication(withBundleIdentifier: ChromeProfile.chromeBundleID)
         else { return }
-        let config = NSWorkspace.OpenConfiguration()
-        config.arguments = ["--profile-directory=\(profileDirectory)"]
-        NSWorkspace.shared.openApplication(at: chromeURL, configuration: config) { _, _ in }
+
+        // Run Chrome binary directly with --profile-directory.
+        // Chrome's singleton IPC forwards the arg to the already-running instance,
+        // which focuses the existing profile window or opens a new one if needed.
+        // This works identically whether Chrome is running or not.
+        let chromeBinary = chromeURL
+            .appendingPathComponent("Contents/MacOS/Google Chrome")
+        let process = Process()
+        process.executableURL = chromeBinary
+        process.arguments = ["--profile-directory=\(profileDirectory)"]
+        try? process.run()
     }
 
     func profile(forDirectory directory: String) -> ChromeProfile? {

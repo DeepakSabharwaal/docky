@@ -566,6 +566,19 @@ struct TileView: View {
                         .padding(appliedTileIconPadding)
                 }
             }
+            .overlay(alignment: .bottom) {
+                if let label = tileNameLabel, !position.isVertical {
+                    Text(label)
+                        .font(.system(size: 11, weight: .semibold, design: .default))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .fixedSize()
+                        .shadow(color: .black.opacity(0.75), radius: 1.5, x: 0, y: 1)
+                        .shadow(color: .black.opacity(0.4), radius: 3, x: 0, y: 0)
+                        .padding(.bottom, appliedTileIconPadding + 1)
+                        .allowsHitTesting(false)
+                }
+            }
             .contentShape(Rectangle())
             .onHover(perform: updateHoverState)
             .onTapGesture(perform: handleTap)
@@ -1209,6 +1222,20 @@ struct TileView: View {
         }
     }
 
+    private var tileNameLabel: String? {
+        switch tile.content {
+        case .app(let app): app.displayName
+        case .folder(let folder): folder.displayName
+        case .appFolder(let folder): folder.displayName
+        case .trash: "Trash"
+        case .launchpad(let lp): lp.title
+        case .startMenu(let sm): sm.title
+        case .chromeProfile(let p): p.profileName
+        case .minimizedWindow, .widget, .smartStack, .spacer, .flexibleSpacer, .divider:
+            nil
+        }
+    }
+
     private func updateHoverState(isHovering newValue: Bool) {
         guard expandableWidget != nil else {
             applyHoverState(newValue)
@@ -1453,7 +1480,14 @@ struct TileView: View {
                 StartMenuService.shared.toggle()
                 return
             }
-            WorkspaceService.shared.activateOrOpen(bundleIdentifier: app.bundleIdentifier)
+            if let pid = app.processIdentifier {
+                WorkspaceService.shared.activateOrOpen(
+                    processIdentifier: pid,
+                    bundleIdentifier: app.bundleIdentifier
+                )
+            } else {
+                WorkspaceService.shared.activateOrOpen(bundleIdentifier: app.bundleIdentifier)
+            }
         case .minimizedWindow(let window):
             isTooltipPresented = false
             _ = WorkspaceService.shared.restoreMinimizedWindow(window)

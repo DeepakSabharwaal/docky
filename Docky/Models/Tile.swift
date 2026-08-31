@@ -41,15 +41,20 @@ struct AppTile: Equatable {
     let bundleIdentifier: String
     let displayName: String
     let displayedWidget: WidgetTile?
+    /// Set for running-app tiles with a known PID (e.g. multi-instance Parall apps).
+    /// nil for pinned tiles where any instance is acceptable.
+    let processIdentifier: pid_t?
 
     nonisolated init(
         bundleIdentifier: String,
         displayName: String,
-        displayedWidget: WidgetTile? = nil
+        displayedWidget: WidgetTile? = nil,
+        processIdentifier: pid_t? = nil
     ) {
         self.bundleIdentifier = bundleIdentifier
         self.displayName = displayName
         self.displayedWidget = displayedWidget
+        self.processIdentifier = processIdentifier
     }
 }
 

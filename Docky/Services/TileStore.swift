@@ -925,6 +925,18 @@ final class TileStore: ObservableObject {
         rebuildTiles()
     }
 
+    var pinnedItems: [PinnedTileItem] {
+        preferences.pinnedItems
+    }
+
+    func removePinnedItems(where predicate: (PinnedTileItem) -> Bool) {
+        var items = preferences.pinnedItems
+        items.removeAll(where: predicate)
+        preferences.pinnedItems = items
+        refreshPinnedTilesFromPreferences()
+        rebuildTiles()
+    }
+
     func smartOrganizePinnedItems() {
         // Smart-organize is FoundationModels-backed (macOS 26+). On
         // older systems, or when the feature is force-disabled via
@@ -2515,8 +2527,10 @@ final class TileStore: ObservableObject {
         pinnedBundleIDs: Set<String>
     ) -> [RunningApp] {
         let hiddenBundleIDs = Set(preferences.hiddenAppBundleIdentifiers)
+        // Key by composite id (bundleID:pid) — supports multiple instances of
+        // the same bundle ID (e.g. Parall-launched apps).
         let currentMap = Dictionary(
-            currentUnpinned.map { ($0.bundleIdentifier, $0) },
+            currentUnpinned.map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
         let lastIndex = displayedRunning.count - 1
@@ -2529,16 +2543,16 @@ final class TileStore: ObservableObject {
                 || hiddenBundleIDs.contains(existing.bundleIdentifier) {
                 continue
             }
-            if let live = currentMap[existing.bundleIdentifier] {
+            if let live = currentMap[existing.id] {
                 survived.append(live)
             } else if index == lastIndex {
                 pendingGhost = existing
             }
         }
 
-        let existingIDs = Set(displayedRunning.map(\.bundleIdentifier))
+        let existingIDs = Set(displayedRunning.map(\.id))
         for app in currentUnpinned
-        where !existingIDs.contains(app.bundleIdentifier)
+        where !existingIDs.contains(app.id)
             && !hiddenBundleIDs.contains(app.bundleIdentifier) {
             survived.append(app)
         }
@@ -2564,6 +2578,10 @@ final class TileStore: ObservableObject {
                 ids.insert(app.bundleIdentifier)
             } else if case .appFolder(let folder) = tile.content {
                 ids.formUnion(folder.bundleIdentifiers)
+            } else if case .chromeProfile = tile.content {
+                // Chrome profile tiles represent the same Chrome process; suppress
+                // the generic running-Chrome tile so Chrome doesn't appear twice.
+                ids.insert(ChromeProfile.chromeBundleID)
             }
         }
         return ids
@@ -2875,10 +2893,11 @@ final class TileStore: ObservableObject {
 
     nonisolated private static func tile(for app: RunningApp) -> Tile {
         Tile(
-            id: "running:\(app.bundleIdentifier)",
+            id: "running:\(app.id)",
             content: .app(AppTile(
                 bundleIdentifier: app.bundleIdentifier,
-                displayName: app.localizedName
+                displayName: app.displayName,
+                processIdentifier: app.processIdentifier
             ))
         )
     }
